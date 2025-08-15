@@ -51,7 +51,20 @@ jobs:
       - name: Clone libserialport
         run: git clone git://sigrok.org/libserialport
 
-      - name: Checkout latest stable tag
+      # --- non-Windows (bash) ---
+      - name: Checkout latest stable tag (Unix)
+        if: runner.os != 'Windows'
+        run: |
+          cd libserialport
+          git fetch --tags
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          git checkout "$LATEST_TAG"
+          echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
+      
+      # --- Windows (MSYS2 bash) ---
+      - name: Checkout latest stable tag (Windows/MSYS2)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
         run: |
           cd libserialport
           git fetch --tags
@@ -150,6 +163,14 @@ jobs:
         with:
           name: native_windows-latest_x86_64
           path: tmp/windows
+
+      - name: Resolve latest stable tag (publish job)
+        run: |
+          git clone --depth=1 git://sigrok.org/libserialport tmp/libserialport
+          cd tmp/libserialport
+          git fetch --tags --depth=1
+          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
       - name: Assemble /native
         run: |
