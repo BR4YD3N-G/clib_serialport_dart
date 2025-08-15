@@ -17,44 +17,63 @@ class SerialPortInfo {
     required this.vendorId,
     required this.productId,
   });
+
+  @override
+  String toString() =>
+      '$name (desc="$description", transport=$transport, vid=${vendorId.toRadixString(16)}, pid=${productId.toRadixString(16)})';
 }
 
 List<SerialPortInfo> listSerialPorts() {
-  final listPtr = calloc<Pointer<Pointer<Void>>>();
-  final r = spListPorts(listPtr);
-  if (r != 0) {
-    calloc.free(listPtr);
-    return [];
+  final listPtrPtr = calloc<Pointer<Pointer<Void>>>();
+  try {
+    final rc = spListPorts(listPtrPtr);
+    if (rc != 0) {
+      return const <SerialPortInfo>[];
+    }
+
+    final listPtr = listPtrPtr.value; // sp_port** (null-terminated)
+    final out = <SerialPortInfo>[];
+
+    var i = 0;
+    while (true) {
+      final portPtr = (listPtr + i).value; // ✅ new indexing API
+      if (portPtr == nullptr) break;
+
+      final name = ptrToString(spGetPortName(portPtr));
+      final desc = ptrToString(spGetPortDescription(portPtr));
+      final transport = spGetPortTransport(portPtr);
+
+      // VID/PID may not exist for non-USB transports; guard the call.
+      final vidPtr = calloc<Uint16>();
+      final pidPtr = calloc<Uint16>();
+      var vid = 0;
+      var pid = 0;
+      try {
+        final usbRc = spGetPortUsbVidPid(portPtr, vidPtr, pidPtr);
+        if (usbRc == 0) {
+          vid = vidPtr.value;
+          pid = pidPtr.value;
+        }
+      } finally {
+        calloc.free(vidPtr);
+        calloc.free(pidPtr);
+      }
+
+      out.add(SerialPortInfo(
+        name: name,
+        description: desc,
+        transport: transport,
+        vendorId: vid,
+        productId: pid,
+      ));
+
+      i++;
+    }
+
+    spFreePortList(listPtr);
+    return out;
+  } finally {
+    calloc.free(listPtrPtr);
   }
-
-  final result = <SerialPortInfo>[];
-  var ports = listPtr.value;
-  while (ports != nullptr) {
-    final port = ports.value;
-
-    final name = ptrToString(spGetPortName(port));
-    final desc = ptrToString(spGetPortDescription(port));
-    final transport = spGetPortTransport(port);
-
-    final vidPtr = calloc<Uint16>();
-    final pidPtr = calloc<Uint16>();
-    spGetPortUsbVidPid(port, vidPtr, pidPtr);
-
-    result.add(SerialPortInfo(
-      name: name,
-      description: desc,
-      transport: transport,
-      vendorId: vidPtr.value,
-      productId: pidPtr.value,
-    ));
-
-    calloc.free(vidPtr);
-    calloc.free(pidPtr);
-
-    ports += sizeOf<Pointer<Void>>();
-  }
-
-  spFreePortList(listPtr.value);
-  calloc.free(listPtr);
-  return result;
 }
+

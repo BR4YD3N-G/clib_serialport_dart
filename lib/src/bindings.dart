@@ -1,39 +1,34 @@
 import 'dart:ffi';
-import 'dart:io';
+import 'dart:io' show Platform;
 import 'package:ffi/ffi.dart';
-
-String _archSuffix() {
-  final ver = Platform.version.toLowerCase();
-
-  if (ver.contains('arm64') || ver.contains('aarch64')) {
-    return '_arm64';
-  }
-  if (ver.contains('x86_64') || ver.contains('amd64')) {
-    return '';
-  }
-  throw UnsupportedError('Unsupported architecture: $ver');
-}
+import 'dart:ffi' as ffi;
 
 DynamicLibrary _openLib() {
   const base = 'native';
-  final arch = _archSuffix();
 
-  if (Platform.isMacOS) {
-    final path = '$base/macos/libserialport${arch.isEmpty ? '' : arch}.dylib';
-    return DynamicLibrary.open(path);
+  switch (ffi.Abi.current()) {
+    // ---- macOS (universal .dylib) ----
+    case ffi.Abi.macosArm64:
+    case ffi.Abi.macosX64:
+      return DynamicLibrary.open('$base/macos/libserialport.dylib');
+
+    // ---- Linux ----
+    case ffi.Abi.linuxArm64:
+      return DynamicLibrary.open('$base/linux/libserialport_arm64.so');
+    case ffi.Abi.linuxX64:
+      return DynamicLibrary.open('$base/linux/libserialport.so');
+
+    // ---- Windows (x64 only) ----
+    case ffi.Abi.windowsX64:
+      return DynamicLibrary.open('$base/windows/libserialport-0.dll');
+
+    // (Optional) support more ABIs later (android/ios) by bundling libs
+    default:
+      throw UnsupportedError('Unsupported ABI: ${ffi.Abi.current()} on ${Platform.operatingSystem}');
   }
-  if (Platform.isLinux) {
-    final path = '$base/linux/libserialport${arch.isEmpty ? '' : arch}.so';
-    return DynamicLibrary.open(path);
-  }
-  if (Platform.isWindows) {
-    // Windows will just have x86_64 for now
-    return DynamicLibrary.open('$base/windows/libserialport-0.dll');
-  }
-  throw UnsupportedError('Unsupported platform');
 }
 
-final _lib = _openLib();
+final DynamicLibrary _lib = _openLib();
 
 // ---------- Port Enumeration ----------
 typedef _sp_list_ports_c = Int32 Function(Pointer<Pointer<Pointer<Void>>>);
