@@ -119,7 +119,7 @@ Examples:
 
 ## Security Issues
 Please **do not** open public issues for security-sensitive bugs.
-Email the maintainer at **you@example.com**.
+Email the maintainer at **brayden@kryptoindustries.com**.
 
 ## License
 - Dart code: **MIT** (see `LICENSE`).
