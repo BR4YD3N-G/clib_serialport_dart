@@ -54,7 +54,7 @@ jobs:
         run: |
           cd libserialport
           git fetch --tags
-          LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          $LATEST_TAG = git describe --tags (git rev-list --tags --max-count=1)
           git checkout "$LATEST_TAG"
           echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
@@ -63,11 +63,11 @@ jobs:
         run: |
           cd libserialport
           ./autogen.sh
-          CFLAGS="-O2 -arch arm64" ./configure --disable-shared --enable-static
+          CFLAGS="-O2 -arch arm64" ./configure --enable-shared --enable-static
           make
           cp .libs/libserialport.dylib ../libserialport_arm64.dylib
           make clean
-          CFLAGS="-O2 -arch x86_64" ./configure --disable-shared --enable-static
+          CFLAGS="-O2 -arch x86_64" ./configure --enable-shared --enable-static
           make
           cp .libs/libserialport.dylib ../libserialport_x86_64.dylib
           mkdir -p ../native/macos
@@ -80,7 +80,7 @@ jobs:
         run: |
           cd libserialport
           ./autogen.sh
-          CFLAGS="-O2 -fPIC" ./configure --disable-shared --enable-static
+          CFLAGS="-O2 -fPIC" ./configure --enable-shared --enable-static
           make
           mkdir -p ../native/linux
           strip --strip-unneeded .libs/libserialport.so
@@ -91,7 +91,7 @@ jobs:
         run: |
           cd libserialport
           ./autogen.sh
-          CFLAGS="-O2 -fPIC" ./configure --host=aarch64-linux-gnu --disable-shared --enable-static
+          CFLAGS="-O2 -fPIC" ./configure --host=aarch64-linux-gnu --enabled-shared --enable-static
           make
           mkdir -p ../native/linux
           aarch64-linux-gnu-strip --strip-unneeded .libs/libserialport.so
@@ -103,7 +103,7 @@ jobs:
         run: |
           cd libserialport
           ./autogen.sh
-          CFLAGS="-O2" ./configure --disable-shared --enable-static
+          CFLAGS="-O2" ./configure --enable-shared --enable-static
           make
           mkdir -p ../native/windows
           strip --strip-unneeded .libs/libserialport-0.dll
