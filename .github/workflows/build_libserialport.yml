@@ -1,136 +1,112 @@
-name: Build libserialport binaries
+steps:
+  - name: Checkout repo
+    uses: actions/checkout@v4
 
-on:
-  workflow_dispatch: # manual trigger from Actions tab
+  # Install tools for macOS
+  - name: Install build tools (macOS)
+    if: runner.os == 'macOS'
+    run: |
+      brew install automake autoconf libtool pkg-config || true
 
-permissions:
-  contents: write
+  # Install tools for Linux
+  - name: Install build tools (Linux)
+    if: runner.os == 'Linux'
+    run: |
+      sudo apt-get update
+      sudo apt-get install -y build-essential autoconf automake libtool pkg-config gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
 
-jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest
-            arch: universal
-          - os: ubuntu-latest
-            arch: x86_64
-          - os: ubuntu-latest
-            arch: arm64
-          - os: windows-latest
-            arch: x86_64
+  # Setup MSYS2 on Windows
+  - name: Setup MSYS2
+    if: runner.os == 'Windows'
+    uses: msys2/setup-msys2@v2
+    with:
+      update: true
+      install: git base-devel mingw-w64-x86_64-toolchain automake autoconf libtool pkg-config
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+  - name: Clone libserialport
+    run: git clone git://sigrok.org/libserialport
 
-      # Install tools for macOS
-      - name: Install build tools (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install automake autoconf libtool pkg-config || true
+  - name: Checkout latest stable tag
+    run: |
+      cd libserialport
+      git fetch --tags
+      LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+      git checkout "$LATEST_TAG"
+      echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
 
-      # Install tools for Linux
-      - name: Install build tools (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential autoconf automake libtool pkg-config gcc-aarch64-linux-gnu g++-aarch64-linux-gnu
+  - name: Build (macOS universal)
+    if: matrix.arch == 'universal'
+    run: |
+      cd libserialport
+      ./autogen.sh
+      CFLAGS="-O2 -arch arm64" ./configure --enable-shared --enable-static
+      make
+      cp .libs/libserialport.dylib ../libserialport_arm64.dylib
+      make clean
+      CFLAGS="-O2 -arch x86_64" ./configure --enable-shared --enable-static
+      make
+      cp .libs/libserialport.dylib ../libserialport_x86_64.dylib
+      mkdir -p ../native/macos
+      lipo -create ../libserialport_arm64.dylib ../libserialport_x86_64.dylib \
+        -output ../native/macos/libserialport.dylib
+      strip -x ../native/macos/libserialport.dylib
 
-      # Setup MSYS2 on Windows
-      - name: Setup MSYS2
-        if: runner.os == 'Windows'
-        uses: msys2/setup-msys2@v2
-        with:
-          update: true
-          install: git base-devel mingw-w64-x86_64-toolchain automake autoconf libtool pkg-config
+  - name: Build (Linux x86_64)
+    if: matrix.arch == 'x86_64' && matrix.os == 'ubuntu-latest'
+    run: |
+      cd libserialport
+      ./autogen.sh
+      CFLAGS="-O2 -fPIC" ./configure --enable-shared --enable-static
+      make
+      mkdir -p ../native/linux
+      strip --strip-unneeded .libs/libserialport.so
+      cp .libs/libserialport.so ../native/linux/libserialport.so
 
-      - name: Clone libserialport
-        run: git clone git://sigrok.org/libserialport
+  - name: Build (Linux ARM64)
+    if: matrix.arch == 'arm64' && matrix.os == 'ubuntu-latest'
+    run: |
+      cd libserialport
+      ./autogen.sh
+      CFLAGS="-O2 -fPIC" ./configure --host=aarch64-linux-gnu --enable-shared --enable-static
+      make
+      mkdir -p ../native/linux
+      aarch64-linux-gnu-strip --strip-unneeded .libs/libserialport.so
+      cp .libs/libserialport.so ../native/linux/libserialport_arm64.so
 
-      - name: Checkout latest stable tag
-        run: |
-          cd libserialport
-          git fetch --tags
-          $LATEST_TAG = git describe --tags (git rev-list --tags --max-count=1)
-          git checkout "$LATEST_TAG"
-          echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
+  - name: Build (Windows x86_64)
+    if: matrix.arch == 'x86_64' && matrix.os == 'windows-latest'
+    shell: msys2 {0}
+    run: |
+      cd libserialport
+      ./autogen.sh
+      CFLAGS="-O2" ./configure --enable-shared --enable-static
+      make
+      mkdir -p ../native/windows
+      strip --strip-unneeded .libs/libserialport-0.dll
+      cp .libs/libserialport-0.dll ../native/windows/libserialport-0.dll
 
-      - name: Build (macOS universal)
-        if: matrix.arch == 'universal'
-        run: |
-          cd libserialport
-          ./autogen.sh
-          CFLAGS="-O2 -arch arm64" ./configure --enable-shared --enable-static
-          make
-          cp .libs/libserialport.dylib ../libserialport_arm64.dylib
-          make clean
-          CFLAGS="-O2 -arch x86_64" ./configure --enable-shared --enable-static
-          make
-          cp .libs/libserialport.dylib ../libserialport_x86_64.dylib
-          mkdir -p ../native/macos
-          lipo -create ../libserialport_arm64.dylib ../libserialport_x86_64.dylib \
-            -output ../native/macos/libserialport.dylib
-          strip -x ../native/macos/libserialport.dylib
+  - name: Generate version.txt and checksums.txt
+    run: |
+      mkdir -p native
+      echo "libserialport version: $LIBSERIALPORT_TAG" > native/version.txt
+      echo "Git commit: $(cd libserialport && git rev-parse HEAD)" >> native/version.txt
+      echo "Build date: $(date +%Y-%m-%d)" >> native/version.txt
+      echo "Platforms: macOS-universal, Linux-x86_64, Linux-arm64, Windows-x86_64" >> native/version.txt
+      echo "Compiler flags: -O2 -fPIC" >> native/version.txt
+      echo "Notes: Release-optimized, stripped, static-linked where possible." >> native/version.txt
+      (cd native && find . -type f ! -name 'checksums.txt' ! -name 'version.txt' -exec sha256sum {} \;) > native/checksums.txt
 
-      - name: Build (Linux x86_64)
-        if: matrix.arch == 'x86_64' && matrix.os == 'ubuntu-latest'
-        run: |
-          cd libserialport
-          ./autogen.sh
-          CFLAGS="-O2 -fPIC" ./configure --enable-shared --enable-static
-          make
-          mkdir -p ../native/linux
-          strip --strip-unneeded .libs/libserialport.so
-          cp .libs/libserialport.so ../native/linux/libserialport.so
+  - name: Commit /native folder to repo
+    if: ${{ github.ref == 'refs/heads/main' }}
+    run: |
+      git config --global user.name "github-actions[bot]"
+      git config --global user.email "github-actions[bot]@users.noreply.github.com"
+      git add native
+      git commit -m "Update libserialport binaries ($LIBSERIALPORT_TAG)" || echo "No changes to commit"
+      git push
 
-      - name: Build (Linux ARM64)
-        if: matrix.arch == 'arm64' && matrix.os == 'ubuntu-latest'
-        run: |
-          cd libserialport
-          ./autogen.sh
-          CFLAGS="-O2 -fPIC" ./configure --host=aarch64-linux-gnu --enabled-shared --enable-static
-          make
-          mkdir -p ../native/linux
-          aarch64-linux-gnu-strip --strip-unneeded .libs/libserialport.so
-          cp .libs/libserialport.so ../native/linux/libserialport_arm64.so
-
-      - name: Build (Windows x86_64)
-        if: matrix.arch == 'x86_64' && matrix.os == 'windows-latest'
-        shell: msys2 {0}
-        run: |
-          cd libserialport
-          ./autogen.sh
-          CFLAGS="-O2" ./configure --enable-shared --enable-static
-          make
-          mkdir -p ../native/windows
-          strip --strip-unneeded .libs/libserialport-0.dll
-          cp .libs/libserialport-0.dll ../native/windows/libserialport-0.dll
-
-      - name: Generate version.txt and checksums.txt
-        run: |
-          mkdir -p native
-          echo "libserialport version: $LIBSERIALPORT_TAG" > native/version.txt
-          echo "Git commit: $(cd libserialport && git rev-parse HEAD)" >> native/version.txt
-          echo "Build date: $(date +%Y-%m-%d)" >> native/version.txt
-          echo "Platforms: macOS-universal, Linux-x86_64, Linux-arm64, Windows-x86_64" >> native/version.txt
-          echo "Compiler flags: -O2 -fPIC --strip-all" >> native/version.txt
-          echo "Notes: Release-optimized, stripped, static-linked where possible." >> native/version.txt
-          (cd native && find . -type f ! -name 'checksums.txt' ! -name 'version.txt' -exec sha256sum {} \;) > native/checksums.txt
-
-      - name: Commit /native folder to repo
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add native
-          git commit -m "Update libserialport binaries ($LIBSERIALPORT_TAG)" || echo "No changes to commit"
-          git push
-
-      - name: Upload native binaries as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: native_binaries
-          path: native/
+  - name: Upload native binaries as artifact
+    uses: actions/upload-artifact@v4
+    with:
+      name: native_binaries
+      path: native/
