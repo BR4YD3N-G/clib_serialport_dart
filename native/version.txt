@@ -1,0 +1,6 @@
+libserialport version: libserialport-0.1.2
+Git commit: (see per-job commit in Actions logs)
+Build date: 2025-08-15
+Platforms: macOS-universal, Linux-x86_64, Linux-arm64, Windows-x86_64
+Compiler flags: -O2 -fPIC
+Notes: Release-optimized, stripped, shared+static built.
