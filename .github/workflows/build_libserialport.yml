@@ -58,6 +58,8 @@ jobs:
           cd libserialport
           git fetch --tags
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          git reset --hard
+          git clean -fdx
           git checkout "$LATEST_TAG"
           echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
       
@@ -69,8 +71,11 @@ jobs:
           cd libserialport
           git fetch --tags
           LATEST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
+          git reset --hard
+          git clean -fdx
           git checkout "$LATEST_TAG"
           echo "LIBSERIALPORT_TAG=$LATEST_TAG" >> $GITHUB_ENV
+
 
       # --- macOS universal ---
       - name: Build (macOS universal)
