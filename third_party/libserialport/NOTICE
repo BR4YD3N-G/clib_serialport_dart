@@ -1,0 +1,16 @@
+Libserialport binary redistribution notice
+
+This package bundles prebuilt libserialport shared libraries under the terms of
+the GNU Lesser General Public License v3.0 or later (LGPL-3.0-or-later).
+Source and project information: https://sigrok.org/wiki/Libserialport
+
+Exact upstream version/commit for the bundled binaries is recorded in:
+  native/version.txt
+
+License texts:
+  - GNU LGPL v3 (COPYING.LESSER)
+  - GNU GPL v3 (COPYING) — referenced by LGPL v3
+
+If these files are missing, you can fetch official texts from the gnu website
+  - GNU GENERAL PUBLIC LICENSE - https://www.gnu.org/licenses/gpl-3.0.txt
+  - GNU LESSER GENERAL PUBLIC LICENSE - https://www.gnu.org/licenses/lgpl-3.0.txt

@@ -1,5 +1,6 @@
 name: clib_serialport_dart
 description: A dart wrapper for clibserialport
+repository: https://github.com/BR4YD3N-G/clib_serialport_dart
 version: 1.0.0
 
 environment:

@@ -37,3 +37,7 @@ const like = 'sample';
 TODO: Tell users more about the package: where to find more information, how to 
 contribute to the package, how to file issues, what response they can expect 
 from the package authors, and more.
+
+This package bundles prebuilt libserialport shared libraries under LGPL-3.0-or-later.
+Source: https://sigrok.org/wiki/Libserialport (see native/version.txt for the exact tag/commit).
+The libraries are dynamically linked at runtime to satisfy LGPL relinking requirements.
