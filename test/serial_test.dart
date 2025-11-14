@@ -1,8 +1,13 @@
 import 'package:test/test.dart';
 import 'package:clib_serialport_dart/clib_serialport_dart.dart';
+import 'dart:io' show Platform;
 
 void main() {
   test('List serial ports', () {
+    final override = Platform.environment['CLIB_SERIALPORT_LIB'];
+    if (override != null && override.isNotEmpty) {
+      setLibraryPath(override);
+    }
     final ports = listSerialPorts();
     print('Ports: ${ports.map((p) => p.name).toList()}');
     expect(ports, isA<List<SerialPortInfo>>());
