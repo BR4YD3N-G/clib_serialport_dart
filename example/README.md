@@ -8,7 +8,11 @@ How to run (macOS / Linux / Windows desktop):
 1. Ensure you have Flutter installed and the desktop target enabled.
 2. From this package root, run flutter's test runner targeting the example file.
 
-Set the native library path if needed:
+Note: this repository is a pure Dart package (not a Flutter plugin). The
+example demonstrates how to run the bindings from a Flutter desktop test by
+pointing the test at the shared library in `native/` or by copying the
+appropriate binaries into your Flutter project's platform folders. Set the
+native library path if needed:
 
 ```bash
 # macOS

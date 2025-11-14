@@ -8,8 +8,9 @@ Future<void> main() async {
     exit(1);
   }
 
-  final lines = checksumsFile.readAsLinesSync()
-      .where((l) => l.trim().isNotEmpty && !l.startsWith('#'));
+  final lines = checksumsFile.readAsLinesSync().where(
+    (l) => l.trim().isNotEmpty && !l.startsWith('#'),
+  );
 
   bool allOk = true;
 

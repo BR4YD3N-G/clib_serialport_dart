@@ -19,7 +19,7 @@ Thanks for your interest in contributing to **clib_serialport_dart**!
 - Dart SDK **>= 3.0.0 < 4.0.0**
 - Clone the repo and fetch deps:
   ```bash
-  git clone https://github.com/<you>/clib_serialport_dart.git
+  git clone https://github.com/BR4YD3N-G/clib_serialport_dart.git
   cd clib_serialport_dart
   dart pub get
   ```
@@ -91,19 +91,34 @@ third_party/libserialport/                  # LGPL/GPL license texts + NOTICE
   to confirm hashes.
 
 ## Releasing
-1. Update `CHANGELOG.md`.
+
+This repository publishes a pure Dart package containing the bindings and a
+small runtime loader. It is intentionally **not** published as a Flutter
+plugin here. If you need automatic bundling for Flutter apps you have two
+options:
+
+- Publish a separate Flutter plugin that depends on this package and places
+  the native libraries into the plugin platform folders so Flutter apps get
+  them automatically on build. (Plugin publishing steps are outside the
+  scope of this repo.)
+- Keep this package as-is (Dart package) and instruct Flutter consumers to
+  use the `tool/bundle_native.dart` helper or to set `CLIB_SERIALPORT_LIB`
+  during testing/build to point at the correct shared library.
+
+Release steps for this Dart package:
+1. Update `CHANGELOG.md` with the changes for the release.
 2. Bump `version:` in `pubspec.yaml` (semver).
 3. Ensure `/native` is up to date (run CI if needed).
 4. Tag the release:
-   ```bash
-   git tag -a vX.Y.Z -m "Release vX.Y.Z"
-   git push --tags
-   ```
-5. Publish to pub:
-   ```bash
-   dart pub publish --dry-run
-   dart pub publish
-   ```
+  ```bash
+  git tag -a vX.Y.Z -m "Release vX.Y.Z"
+  git push --tags
+  ```
+5. Publish to pub (dry-run first):
+  ```bash
+  dart pub publish --dry-run
+  dart pub publish
+  ```
 
 ## Commit Messages
 Use **Conventional Commits**:

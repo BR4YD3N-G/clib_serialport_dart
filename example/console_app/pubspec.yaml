@@ -1,0 +1,12 @@
+name: clib_serialport_console_example
+publish_to: none
+description: A simple console example for clib_serialport_dart
+version: 0.0.1
+
+environment:
+  sdk: '>=3.9.0 <4.0.0'
+
+dependencies:
+  args: ^2.4.0
+  clib_serialport_dart:
+    path: ../../

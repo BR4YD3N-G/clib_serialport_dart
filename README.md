@@ -194,7 +194,21 @@ The loader in `bindings.dart` automatically picks the correct file:
 - Linux: chooses `libserialport.so` or `libserialport_arm64.so` based on architecture
 - Windows: `libserialport-0.dll`
 
-> If you relocate the `native/` folder, update the path logic in `bindings.dart`.
+
+Note about Flutter usage
+------------------------
+This repository is a pure Dart package that ships precompiled shared libraries
+under `native/`. Flutter apps (desktop) will not automatically include those
+shared libraries unless they are copied into the Flutter project's platform
+folders or packaged by a Flutter plugin. To include the native libraries in a
+Flutter app, either:
+
+- Use the `tool/bundle_native.dart` helper to copy the correct binaries into
+  the Flutter project's platform folders, or
+- Build/publish a separate Flutter plugin that depends on this package and
+  places the native artifacts into the plugin platform folders.
+
+See `example/README.md` for a usage example with the bundler script.
 
 ---
 
