@@ -1,3 +1,7 @@
+// Note: This test uses the runtime library loader. For CI or local runs you can
+// set `CLIB_SERIALPORT_LIB` to point at one of the shared libraries under
+// `native/` or use `dart tool/bundle_native.dart` to copy the appropriate
+// library into your test environment.
 import 'package:test/test.dart';
 import 'package:clib_serialport_dart/clib_serialport_dart.dart';
 import 'dart:io' show Platform;

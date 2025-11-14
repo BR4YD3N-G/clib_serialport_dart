@@ -29,16 +29,21 @@ class SerialPort {
 
   bool configure(SerialPortConfig cfg) {
     return spSetBaudrate(_port!, cfg.baudRate) == 0 &&
-           spSetBits(_port!, cfg.dataBits) == 0 &&
-           spSetParity(_port!, cfg.parity.index) == 0 &&
-           spSetStopbits(_port!, cfg.stopBits) == 0 &&
-           spSetFlowcontrol(_port!, cfg.flowControl.index) == 0;
+        spSetBits(_port!, cfg.dataBits) == 0 &&
+        spSetParity(_port!, cfg.parity.index) == 0 &&
+        spSetStopbits(_port!, cfg.stopBits) == 0 &&
+        spSetFlowcontrol(_port!, cfg.flowControl.index) == 0;
   }
 
   int write(List<int> data, {int timeoutMs = 1000}) {
     final buf = calloc<Uint8>(data.length);
     buf.asTypedList(data.length).setAll(0, data);
-    final written = spBlockingWrite(_port!, buf.cast<Void>(), data.length, timeoutMs);
+    final written = spBlockingWrite(
+      _port!,
+      buf.cast<Void>(),
+      data.length,
+      timeoutMs,
+    );
     calloc.free(buf);
     return written;
   }

@@ -14,7 +14,8 @@ void main(List<String> args) {
   for (var i = 0; i < args.length; i++) {
     final a = args[i];
     if (a == '--dest' && i + 1 < args.length) dest = args[++i];
-    if (a == '--flutter-project' && i + 1 < args.length) flutterProject = args[++i];
+    if (a == '--flutter-project' && i + 1 < args.length)
+      flutterProject = args[++i];
   }
 
   final root = Directory.current.path;
@@ -75,9 +76,15 @@ void main(List<String> args) {
     }
 
     print('\nDone. You may need to add a platform-specific copy/install step:');
-    print('- macOS: add a Copy Files phase to include the dylib in the .app bundle.');
-    print('- Linux: ensure your CMakeLists.txt installs or bundles the .so into the AppDir.');
-    print('- Windows: ensure the DLL is copied into the runner exe output directory.');
+    print(
+      '- macOS: add a Copy Files phase to include the dylib in the .app bundle.',
+    );
+    print(
+      '- Linux: ensure your CMakeLists.txt installs or bundles the .so into the AppDir.',
+    );
+    print(
+      '- Windows: ensure the DLL is copied into the runner exe output directory.',
+    );
 
     exit(0);
   }

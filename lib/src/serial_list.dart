@@ -59,13 +59,15 @@ List<SerialPortInfo> listSerialPorts() {
         calloc.free(pidPtr);
       }
 
-      out.add(SerialPortInfo(
-        name: name,
-        description: desc,
-        transport: transport,
-        vendorId: vid,
-        productId: pid,
-      ));
+      out.add(
+        SerialPortInfo(
+          name: name,
+          description: desc,
+          transport: transport,
+          vendorId: vid,
+          productId: pid,
+        ),
+      );
 
       i++;
     }
@@ -76,4 +78,3 @@ List<SerialPortInfo> listSerialPorts() {
     calloc.free(listPtrPtr);
   }
 }
-
